@@ -56,9 +56,9 @@ object Direction {
 class ReportBinaryIssues extends DefaultTask {
   private val log = getProject.getLogger
   private val wrappedLogger = new Logging {
-    override def info(str: String): Unit = log.info(str, "")
+    override def verbose(msg: String): Unit = log.info(msg, "")
 
-    override def debugLog(str: String): Unit = log.debug(str, "")
+    override def debug(msg: String): Unit = log.debug(msg, "")
 
     override def warn(str: String): Unit = log.warn(str, "")
 
@@ -244,8 +244,8 @@ class ReportBinaryIssues extends DefaultTask {
   }
 
   private def collectProblems(cp: ClassPath, oldJar: File, newJar: File) = { () =>
-    new MiMaLib(cp, wrappedLogger)
-      .collectProblems(oldJar, newJar)
+    new MiMaLib(cp.asClassPathStrings.map(new java.io.File(_)), wrappedLogger)
+      .collectProblems(oldJar, newJar, Nil)
   }
 
   private def runMima(

@@ -1,28 +1,28 @@
 plugins {
     id 'java-gradle-plugin'
     id 'scala'
-    id "com.github.maiflai.scalatest" version "0.26"
+    id 'com.github.maiflai.scalatest' version "0.31"
     // Publishing to maven
     id 'maven-publish'
-    id "com.gradle.plugin-publish" version "0.11.0"
+    id 'com.gradle.plugin-publish' version '1.0.0'
 }
 
-group 'the.flowering.branches'
-version '0.0.0'
+group 'me.jeffshaw.mima'
+version '1.0.0'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    def mima = "0.7.0"
-    def scalaLangVersion = 2.12
+    def mima = "1.1.1"
+    def scalaLangVersion = '2.12'
     implementation "com.typesafe:mima-core_$scalaLangVersion:$mima"
-    testImplementation "org.scalatest:scalatest_$scalaLangVersion:3.1.1"
+    api 'org.scala-lang:scala-compiler:2.12.16'
+    testImplementation "org.scalatest:scalatest_$scalaLangVersion:3.2.14"
     implementation gradleApi()
-    testRuntime 'com.vladsch.flexmark:flexmark-profile-pegdown:0.35.10'
+    testRuntimeOnly 'com.vladsch.flexmark:flexmark-all:0.62.2'
 }
-
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
@@ -32,7 +32,9 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 gradlePlugin {
     plugins {
         mima {
-            id = "the.flowering.branches.mima-gradle-plugin"
+            id = "me.jeffshaw.mima.mima-gradle-plugin"
+            displayName = "Scala mima gradle plugin"
+            description = 'a plugin to run scala mima on your library to check backwards compatibility'
             implementationClass = "the.flowering.branches.mima.MimaPlugin"
         }
     }
@@ -47,15 +49,9 @@ gradlePlugin {
 // The configuration example below shows the minimum required properties
 // configured to publish your plugin to the plugin portal
 pluginBundle {
-    website = "https://github.com/borissmidt/gradle-mima-plugin"
-    vcsUrl = "https://github.com/borissmidt/gradle-mima-plugin"
+    website = "https://github.com/shawjef3/gradle-mima-plugin"
+    vcsUrl = "https://github.com/shawjef3/gradle-mima-plugin"
     tags = ["mima", "scala", "binarycompatibility", "compatibility"]
-    description = 'a plugin to run scala mima on your library to check backwards compatibility'
-    plugins{
-        mima{
-            displayName = "Scala mima gradle plugin"
-        }
-    }
 }
 
 publishing {
