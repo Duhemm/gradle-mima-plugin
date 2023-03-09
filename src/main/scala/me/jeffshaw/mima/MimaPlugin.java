@@ -4,7 +4,7 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package the.flowering.branches.mima;
+package me.jeffshaw.mima;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -45,6 +45,9 @@ public class MimaPlugin implements Plugin<Project> {
                     .artifactView(vc -> vc.componentFilter(ci -> ci instanceof ProjectComponentIdentifier))
                     .getFiles();
 
+            task.getOldGroup().set(extension.getOldGroup());
+            task.getOldName().set(extension.getOldName());
+            task.getTagFilter().set(extension.getTagFilter());
             task.getCurrentArtifact().set(thisJarFile.plus(otherProjectsOutputs));
             task.getFailOnException().set(extension.getFailOnException());
 //            task.getExclude().set(extension.getExclude());

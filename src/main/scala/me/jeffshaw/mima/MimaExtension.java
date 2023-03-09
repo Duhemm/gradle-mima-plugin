@@ -4,16 +4,19 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package the.flowering.branches.mima;
+package me.jeffshaw.mima;
 
+import java.util.Optional;
+import java.util.function.Function;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
-
-import java.util.stream.Collectors;
+import scala.collection.JavaConverters;
 
 public class MimaExtension {
+
+    private final Property<Function<String, Optional<String>>> tagFilter;
     private final Property<String> oldGroup;
     private final Property<String> oldName;
     private final SetProperty<String> compareToVersions;
@@ -21,13 +24,15 @@ public class MimaExtension {
     //    private final NamedDomainObjectContainer<Exclude> exclude;
     private final Property<Boolean> reportSignatureProblems;
     private final Property<String> direction;
-    private final Provider<GroupName> oldGroupName;
+    private final Property<GroupName> oldGroupName;
 
     public SetProperty<String> getCompareToVersions() {
         return compareToVersions;
     }
 
     public MimaExtension(Project project) {
+        this.tagFilter = project.getObjects().property((Class<Function<String, Optional<String>>>) (Class) Function.class)
+            .convention((String tag) -> Optional.ofNullable(tag.startsWith("v") ? tag.substring(1) : null));
         this.failOnException = project.getObjects().property(Boolean.class);
 //        this.exclude = project.getObjects().domainObjectContainer(Exclude.class, name -> new Exclude(name));
         this.reportSignatureProblems = project.getObjects().property(Boolean.class);
@@ -39,12 +44,15 @@ public class MimaExtension {
         this.oldName.set(project.getProviders().provider(project::getName));
         this.oldGroup.set(
                 project.getProviders().provider(() -> project.getGroup().toString()));
-        this.compareToVersions.set(project.getProviders()
-                .provider(
-                        () -> GitVersionUtils.previousGitTags(project).limit(1).collect(Collectors.toList())));
+        this.compareToVersions.set(
+            project.getProviders()
+                .provider(() -> JavaConverters.asJavaIterable(GitVersionUtils.previousGitTags(project, tagFilter.get()).versions().take(1)))
+        );
 
-        this.oldGroupName = project.provider(() ->
-                new GroupName(oldGroup.get(), oldName.get()));
+        this.oldGroupName = project.getObjects().property(GroupName.class)
+            .convention(
+                project.provider(() -> new GroupName(oldGroup.get(), oldName.get()))
+            );
     }
 
     public Property<Boolean> getFailOnException() {
@@ -63,8 +71,20 @@ public class MimaExtension {
         return direction;
     }
 
-    public Provider<GroupName> groupName() {
+    public Provider<GroupName> getGroupName() {
         return oldGroupName;
+    }
+
+    public Property<String> getOldGroup() {
+        return oldGroup;
+    }
+
+    public Property<String> getOldName() {
+        return oldName;
+    }
+
+    public Property<Function<String, Optional<String>>> getTagFilter() {
+        return tagFilter;
     }
 
 //    public void exclude(Closure config) {

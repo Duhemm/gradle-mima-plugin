@@ -4,7 +4,7 @@ plugins {
     id 'com.github.maiflai.scalatest' version "0.31"
     // Publishing to maven
     id 'maven-publish'
-    id 'com.gradle.plugin-publish' version '1.0.0'
+    id 'com.gradle.plugin-publish' version '1.1.0'
 }
 
 group 'me.jeffshaw.mima'
@@ -14,14 +14,40 @@ repositories {
     mavenCentral()
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 dependencies {
     def mima = "1.1.1"
     def scalaLangVersion = '2.12'
     implementation "com.typesafe:mima-core_$scalaLangVersion:$mima"
-    api 'org.scala-lang:scala-compiler:2.12.16'
+    api 'org.scala-lang:scala-compiler:2.12.17'
+
     testImplementation "org.scalatest:scalatest_$scalaLangVersion:3.2.14"
     implementation gradleApi()
     testRuntimeOnly 'com.vladsch.flexmark:flexmark-all:0.62.2'
+
+    /*
+    https://blog.gradle.org/log4j-vulnerability
+    https://discuss.gradle.org/t/dependency-version-constraints-for-all-configurations/34161/3
+    This can be removed if zinc is updated to 1.8.0, which would also require a new Gradle version.
+     */
+    constraints {
+        configurations.all { Configuration conf ->
+            add(
+                conf.name,
+                implementation("org.apache.logging.log4j:log4j-core") {
+                    version {
+                        strictly("[2.20, 3[")
+                        prefer("2.20.0")
+                    }
+                    because("CVE-2021-44228, CVE-2021-45046, CVE-2021-45105: Log4j vulnerable to remote code execution and other critical security vulnerabilities")
+                }
+            )
+        }
+    }
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -32,10 +58,10 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 gradlePlugin {
     plugins {
         mima {
-            id = "me.jeffshaw.mima.mima-gradle-plugin"
+            id = "me.jeffshaw.mima.gradle-plugin"
             displayName = "Scala mima gradle plugin"
             description = 'a plugin to run scala mima on your library to check backwards compatibility'
-            implementationClass = "the.flowering.branches.mima.MimaPlugin"
+            implementationClass = "me.jeffshaw.mima.MimaPlugin"
         }
     }
 }
@@ -50,11 +76,14 @@ gradlePlugin {
 // configured to publish your plugin to the plugin portal
 pluginBundle {
     website = "https://github.com/shawjef3/gradle-mima-plugin"
-    vcsUrl = "https://github.com/shawjef3/gradle-mima-plugin"
+    vcsUrl = "https://github.com/shawjef3/gradle-mima-plugin.git"
     tags = ["mima", "scala", "binarycompatibility", "compatibility"]
 }
 
 publishing {
+    repositories {
+        mavenLocal()
+    }
     publications {
         maven(MavenPublication) {
             from components.java

@@ -4,7 +4,7 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package the.flowering.branches.mima;
+package me.jeffshaw.mima;
 
 import java.util.Objects;
 import java.util.Optional;
